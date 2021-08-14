@@ -8,52 +8,76 @@ document.addEventListener(`DOMContentLoaded`, () => {
 				wrapper : option.wrapper !== undefined ? document.querySelector(option.wrapper) : new Error(`wrapper가 없습니다.`),
 				index : option.index !== undefined ? option.index : 0,
 				indicator : option.indicator !== undefined ? option.indicator : false,
-				indicatorIndex : 0,
 				auto : option.auto !== undefined ? option.auto : false,
 				button : option.button !== undefined ? option.button : false,
 				drag: option.drag !== undefined ? option.drag : false,
 				dragStart: 0,
 				play : option.play !== undefined ? option.play : false,
 				shift: option.shift !== undefined ? option.shift : 1,
-				infinite: option.infinite !== undefined ? option.infinite : false,
+				// infinite: option.infinite !== undefined ? option.infinite : false,
 				visible: option.visible !== undefined ? option.visible : 1,
 			}
 
 			_this.view(_this.slideStore)
 			_this.model(_this.slideStore)
-			_this.controller(_this.slideStore)
 			_this.initialize(_this.slideStore)
+			_this.controller(_this.slideStore)
 		}
 
 		initialize(slideStore) {
-			if (slideStore.infinite) {
-				// clone를 뜨고 - 몇장을뜰까?
-				// 초기 인덱스를 변경해준다. - visible 수만큼만 더해준다.
-				const slideList = slideStore.wrapper.querySelectorAll(`.slide_list li`)
+			const initList = () => {
+				let listSum = 0
+				const listArray = [0]
 
-				for (let i = 0; i < slideStore.visible; i++) {
-					const cloneList = slideList[(slideStore.visible - 1) - i].cloneNode(true)
-					
-					slideStore.wrapper.querySelector(`.slide_list`).insertAdjacentElement(`afterbegin`, cloneList)
-				}
+				slideStore.wrapper.querySelectorAll(`.slide_list li`).forEach((item) => {
+					listSum += item.offsetWidth
+					listArray.push(listSum)
+				})
 
-				for (let i = 0; i < slideStore.visible; i++) {
-					const cloneList = slideList[i].cloneNode(true)
-					
-					slideStore.wrapper.querySelector(`.slide_list`).insertAdjacentElement(`beforeend`, cloneList)
-				}
+				slideStore.listArray = listArray
 
-				slideStore.index += slideStore.visible
+				slideStore.listLen = slideStore.wrapper.querySelectorAll(`.slide_list li`).length
 
-				// slideStore.wrapper.querySelector(`.slide_list`).style.transform = `translate(${-slideStore.visible * 400}px, 0)`
+				slideStore.wrapper.querySelector(`.slide_list`).style.width = `${listSum}px`
 			}
 
-			let listSum = 0;
-			slideStore.wrapper.querySelectorAll(`.slide_list li`).forEach((item) => {
-				listSum += item.offsetWidth 
-			})
+			initList()
 
-			slideStore.wrapper.querySelector(`.slide_list`).style.width = `${listSum}px`
+			const initIndicator = () => {
+				slideStore.indicatorLen = Math.ceil(slideStore.wrapper.querySelectorAll(`.slide_list li`).length / slideStore.visible)
+
+				for (let i = 0; i < slideStore.indicatorLen; i++) {
+					slideStore.wrapper.querySelector(`.slide_indicator`).insertAdjacentHTML(`beforeend`, `<li><button type="button">${i}</button></li>`)
+				}
+
+				slideStore.indicatorIndex = 0
+			}
+
+			if (slideStore.indicator) {
+				initIndicator()
+			}
+			
+			// if (slideStore.infinite) {
+			// 	// clone를 뜨고 - 몇장을뜰까?
+			// 	// 초기 인덱스를 변경해준다. - visible 수만큼만 더해준다.
+			// 	const slideList = slideStore.wrapper.querySelectorAll(`.slide_list li`)
+
+			// 	for (let i = 0; i < slideStore.visible; i++) {
+			// 		const cloneList = slideList[(slideStore.visible - 1) - i].cloneNode(true)
+					
+			// 		slideStore.wrapper.querySelector(`.slide_list`).insertAdjacentElement(`afterbegin`, cloneList)
+			// 	}
+
+			// 	for (let i = 0; i < slideStore.visible; i++) {
+			// 		const cloneList = slideList[i].cloneNode(true)
+					
+			// 		slideStore.wrapper.querySelector(`.slide_list`).insertAdjacentElement(`beforeend`, cloneList)
+			// 	}
+
+			// 	slideStore.index += slideStore.visible
+
+			// 	// slideStore.wrapper.querySelector(`.slide_list`).style.transform = `translate(${-slideStore.visible * 400}px, 0)`
+			// }
 
 			slideStore.viewIndex()
 			slideStore.viewIndicator()
@@ -97,12 +121,13 @@ document.addEventListener(`DOMContentLoaded`, () => {
 
 			slideStore.onBtnClick = (event) => {
 				if (event.target.classList.contains(`slide_prev`)) {
-					slideStore.index -= slideStore.shift
-					slideStore.indicatorIndex -= 1
+					slideStore.index = slideStore.index - slideStore.shift < 0 ? 0 : slideStore.index - slideStore.shift
+					slideStore.indicatorIndex = slideStore.indicatorIndex - 1 < 0 ? 0 : slideStore.indicatorIndex - 1
 				} else {
-					slideStore.index += slideStore.shift
-					slideStore.indicatorIndex += 1
+					slideStore.index = slideStore.index + slideStore.shift >= slideStore.listLen ? slideStore.listLen - Math.floor(slideStore.visible / slideStore.shift) : slideStore.index + slideStore.shift
+					slideStore.indicatorIndex = slideStore.indicatorIndex + 1 >= slideStore.indicatorLen ? slideStore.indicatorLen - 1 : slideStore.indicatorIndex + 1
 				}
+				console.log(slideStore.index, slideStore.indicatorIndex,  slideStore.listLen, slideStore.listArray)
 
 				slideStore.viewIndex()
 				slideStore.viewIndicator()
@@ -162,7 +187,7 @@ document.addEventListener(`DOMContentLoaded`, () => {
 			const _this = this
 
 			slideStore.viewIndex = () => {
-				slideStore.wrapper.querySelector(`.slide_list`).style.transform = `translate(${-slideStore.index * 400}px, 0)`
+				slideStore.wrapper.querySelector(`.slide_list`).style.transform = `translate(${-slideStore.listArray[slideStore.index]}px, 0)`
 				slideStore.wrapper.querySelector(`.slide_list`).style.transition = `all .5s`
 			}
 
@@ -195,7 +220,7 @@ document.addEventListener(`DOMContentLoaded`, () => {
 		drag: true,
 		play: true,
 		shift: 2,
-		infinite: true,
-		visible: 2
+		visible: 2,
+		// infinite: true,
 	})
 })
