@@ -1,0 +1,33 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+ul, li {
+	list-style: none;
+}
+
+.slide_wrap {
+	width: 1200px;
+	margin: 0 auto;
+}
+
+.slide_area {
+	overflow: hidden;
+}
+
+.slide_list {
+	font-size: 0;
+}
+
+.slide_item {
+	display: inline-block;
+	width: 400px;
+	height: 400px;
+	font-size: 100px;
+    color: #fff;
+}
+
+.slide_indicator li.active button {
+	background-color: red;
+}
